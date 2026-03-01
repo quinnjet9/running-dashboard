@@ -14,7 +14,7 @@
       --surface: #18181f;
       --border:  #2e2e3d;
       --accent:  #f97316;
-      --accent2: #6366f1;
+      --accent2: #7c3aed;   /* EDIT THIS: run count line colour (darker purple) */
       --text:    #f0f0f5;
       --muted:   #888899;
     }
@@ -228,10 +228,11 @@
         <div class="chart-sub" id="chartSub"></div>
       </div>
       <div class="chart-legend">
-        <div class="legend-item">
+        <!-- Toggle button for distance bars -->
+        <button id="toggleDist" onclick="toggleDistance()" class="toggle-btn toggle-btn--on">
           <div class="legend-dot" style="background:var(--accent)"></div>
           Distance (km)
-        </div>
+        </button>
         <!-- Toggle button for run count line -->
         <button id="toggleCount" onclick="toggleRunCount()" class="toggle-btn toggle-btn--on">
           <div class="legend-line" style="background:var(--accent2)"></div>
@@ -375,7 +376,11 @@ function updateDashboard() {
   document.getElementById('headerSub').textContent    = `Daniel Chen · Strava · ${periodLabel}`;
   document.getElementById('chartSub').textContent     = `Distance & run frequency · by ${granLabel}`;
 
-  // ── Rebuild chart ──
+  // ── Rebuild chart (reset toggle button states to ON) ──
+  showDistance = true;
+  showRunCount = true;
+  document.getElementById('toggleDist').className  = 'toggle-btn toggle-btn--on';
+  document.getElementById('toggleCount').className = 'toggle-btn toggle-btn--on';
   if (chartInstance) chartInstance.destroy();
 
   const ctx     = document.getElementById('mainChart').getContext('2d');
@@ -405,11 +410,11 @@ function updateDashboard() {
           type: 'line',
           label: 'Runs',
           data: countData,
-          borderColor: '#6366f1',
-          backgroundColor: 'rgba(99,102,241,0.08)',
+          borderColor: '#7c3aed',
+          backgroundColor: 'rgba(124,58,237,0.08)',
           borderWidth: 2.5,
           pointRadius: buckets.length > 60 ? 0 : 3,
-          pointBackgroundColor: '#6366f1',
+          pointBackgroundColor: '#7c3aed',
           tension: 0.35,
           fill: false,
           yAxisID: 'yCount',
@@ -439,26 +444,41 @@ function updateDashboard() {
       },
       scales: {
         x: {
-          ticks: { color: tickColor, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
+          ticks: { color: tickColor, font: { weight: 'bold' }, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
           grid: { color: gridColor },
         },
         yKm: {
           type: 'linear',
           position: 'left',
           beginAtZero: true,
-          ticks: { color: '#f97316', callback: v => v + 'km' },
+          ticks: { color: '#f97316', font: { weight: 'bold' }, callback: v => v + 'km' },
           grid: { color: gridColor },
         },
         yCount: {
           type: 'linear',
           position: 'right',
           beginAtZero: true,
-          ticks: { color: '#6366f1', stepSize: 1, callback: v => Number.isInteger(v) ? v : '' },
+          ticks: { color: '#7c3aed', font: { weight: 'bold' }, stepSize: 1, callback: v => Number.isInteger(v) ? v : '' },
           grid: { drawOnChartArea: false },
         },
       }
     }
   });
+}
+
+// ===== DISTANCE TOGGLE =====
+let showDistance = true;
+
+function toggleDistance() {
+  showDistance = !showDistance;
+  const btn = document.getElementById('toggleDist');
+  btn.className = 'toggle-btn ' + (showDistance ? 'toggle-btn--on' : 'toggle-btn--off');
+
+  if (chartInstance) {
+    chartInstance.data.datasets[0].hidden = !showDistance;
+    chartInstance.options.scales.yKm.display = showDistance;
+    chartInstance.update();
+  }
 }
 
 // ===== RUN COUNT TOGGLE =====
@@ -470,9 +490,7 @@ function toggleRunCount() {
   btn.className = 'toggle-btn ' + (showRunCount ? 'toggle-btn--on' : 'toggle-btn--off');
 
   if (chartInstance) {
-    // Toggle the run count dataset (index 1) visibility without rebuilding the chart
     chartInstance.data.datasets[1].hidden = !showRunCount;
-    // Also hide/show the right axis
     chartInstance.options.scales.yCount.display = showRunCount;
     chartInstance.update();
   }
