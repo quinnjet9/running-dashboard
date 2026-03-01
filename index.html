@@ -475,6 +475,8 @@ function updateDashboard() {
           type: 'linear',
           position: 'left',
           beginAtZero: true,
+          // Add 5km buffer above max so bar labels never get clipped at the top
+          suggestedMax: Math.max(...kmData) + 5,
           ticks: { color: '#f97316', font: { weight: 'bold' }, callback: v => v + 'km' },
           grid: { color: gridColor },
         },
