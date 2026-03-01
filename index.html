@@ -377,11 +377,16 @@ function updateDashboard() {
   document.getElementById('headerSub').textContent    = `Daniel Chen · Strava · ${periodLabel}`;
   document.getElementById('chartSub').textContent     = `Distance & run frequency · by ${granLabel}`;
 
+  // ── Daily frequency: run count is always 1 per bar (or 0) — irrelevant, hide it ──
+  const isDaily  = granularity === 'daily';
+  const countBtn = document.getElementById('toggleCount');
+  countBtn.style.display = isDaily ? 'none' : '';  // hide toggle button entirely on daily
+  showRunCount   = !isDaily;                        // force hidden on daily, restore on others
+
   // ── Rebuild chart (reset toggle button states to ON) ──
   showDistance = true;
-  showRunCount = true;
-  document.getElementById('toggleDist').className  = 'toggle-btn toggle-btn--on';   // data-color="orange" stays in HTML
-  document.getElementById('toggleCount').className = 'toggle-btn toggle-btn--on';   // data-color="purple" stays in HTML
+  document.getElementById('toggleDist').className  = 'toggle-btn toggle-btn--on';
+  if (!isDaily) countBtn.className = 'toggle-btn toggle-btn--on';
   if (chartInstance) chartInstance.destroy();
 
   const ctx     = document.getElementById('mainChart').getContext('2d');
@@ -406,6 +411,7 @@ function updateDashboard() {
           borderRadius: 4,
           yAxisID: 'yKm',
           order: 2,
+          hidden: false,
         },
         {
           type: 'line',
@@ -420,6 +426,7 @@ function updateDashboard() {
           fill: false,
           yAxisID: 'yCount',
           order: 1,
+          hidden: !showRunCount,   // hidden from the start if daily frequency
         }
       ]
     },
@@ -459,6 +466,7 @@ function updateDashboard() {
           type: 'linear',
           position: 'right',
           beginAtZero: true,
+          display: showRunCount,   // hidden on daily frequency
           ticks: { color: '#7c3aed', font: { weight: 'bold' }, stepSize: 1, callback: v => Number.isInteger(v) ? v : '' },
           grid: { drawOnChartArea: false },
         },
