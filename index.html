@@ -152,8 +152,9 @@
       font-family: inherit;
     }
     .toggle-btn:hover { border-color: var(--accent2); color: var(--text); }
-    /* ON = active/highlighted */
-    .toggle-btn--on  { border-color: var(--accent2); color: var(--text); }
+    /* ON = active/highlighted — colour set per-button via data attribute */
+    .toggle-btn--on[data-color="orange"] { border-color: var(--accent);  color: var(--text); }
+    .toggle-btn--on[data-color="purple"] { border-color: var(--accent2); color: var(--text); }
     /* OFF = dimmed */
     .toggle-btn--off { opacity: 0.4; }
   </style>
@@ -229,12 +230,12 @@
       </div>
       <div class="chart-legend">
         <!-- Toggle button for distance bars -->
-        <button id="toggleDist" onclick="toggleDistance()" class="toggle-btn toggle-btn--on">
+        <button id="toggleDist" onclick="toggleDistance()" class="toggle-btn toggle-btn--on" data-color="orange">
           <div class="legend-dot" style="background:var(--accent)"></div>
           Distance (km)
         </button>
         <!-- Toggle button for run count line -->
-        <button id="toggleCount" onclick="toggleRunCount()" class="toggle-btn toggle-btn--on">
+        <button id="toggleCount" onclick="toggleRunCount()" class="toggle-btn toggle-btn--on" data-color="purple">
           <div class="legend-line" style="background:var(--accent2)"></div>
           Run count
         </button>
@@ -379,8 +380,8 @@ function updateDashboard() {
   // ── Rebuild chart (reset toggle button states to ON) ──
   showDistance = true;
   showRunCount = true;
-  document.getElementById('toggleDist').className  = 'toggle-btn toggle-btn--on';
-  document.getElementById('toggleCount').className = 'toggle-btn toggle-btn--on';
+  document.getElementById('toggleDist').className  = 'toggle-btn toggle-btn--on';   // data-color="orange" stays in HTML
+  document.getElementById('toggleCount').className = 'toggle-btn toggle-btn--on';   // data-color="purple" stays in HTML
   if (chartInstance) chartInstance.destroy();
 
   const ctx     = document.getElementById('mainChart').getContext('2d');
