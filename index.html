@@ -130,12 +130,14 @@
     .stat-card:first-child .stat-value { color: var(--accent); }
 
     /* ===== FITNESS CARD ===== */
-    .fitness-row { display: flex; gap: 0; margin-top: 4px; }
-    .fitness-item { flex: 1; }
+    #cardFitness { display: flex; flex-direction: column; }
+    .fitness-row { display: flex; gap: 0; margin-top: 4px; flex: 1; align-items: flex-start; }
+    .fitness-item { flex: 1; display: flex; flex-direction: column; }
     .fitness-item + .fitness-item { border-left: 1px solid var(--border); padding-left: 14px; }
     .fitness-val { font-size: 24px; font-weight: 800; letter-spacing: -1px; line-height: 1; color: var(--text); }
     .fitness-key { font-size: 10px; color: var(--muted); margin-top: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
     .fitness-hint { color: var(--border); }
+    .fitness-commentary { font-size: 10.5px; color: var(--muted); margin-top: 8px; line-height: 1.4; flex: 1; }
     .stat-unit { font-size: 14px; font-weight: 500; opacity: 0.7; }
     .stat-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
 
@@ -260,14 +262,17 @@
         <div class="fitness-item">
           <div class="fitness-val" id="statCTL">—</div>
           <div class="fitness-key">Fitness <span class="fitness-hint">42d</span></div>
+          <div class="fitness-commentary" id="statCTLComment"></div>
         </div>
         <div class="fitness-item">
           <div class="fitness-val" id="statATL">—</div>
           <div class="fitness-key">Fatigue <span class="fitness-hint">7d</span></div>
+          <div class="fitness-commentary" id="statATLComment"></div>
         </div>
         <div class="fitness-item">
           <div class="fitness-val" id="statForm">—</div>
           <div class="fitness-key">Form</div>
+          <div class="fitness-commentary" id="statFormComment"></div>
         </div>
       </div>
     </div>
@@ -403,12 +408,35 @@ function computeFitness() {
 // Render fitness score once on load (always uses full ALL_RUNS history)
 (function renderFitness() {
   const { ctl, atl, form } = computeFitness();
-  document.getElementById('statCTL').textContent  = ctl.toFixed(1);
-  document.getElementById('statATL').textContent  = atl.toFixed(1);
+
+  // ── CTL display + commentary ──
+  document.getElementById('statCTL').textContent = ctl.toFixed(1);
+  let ctlComment;
+  if      (ctl >= 8)  ctlComment = 'Strong aerobic base — you\'re in the best shape of your recent training.';
+  else if (ctl >= 5)  ctlComment = 'Solid fitness level, consistent training is showing.';
+  else if (ctl >= 2)  ctlComment = 'Moderate base — ramping up will lift this quickly.';
+  else                ctlComment = 'Building phase — fitness will rise fast with regular runs.';
+  document.getElementById('statCTLComment').textContent = ctlComment;
+
+  // ── ATL display + commentary ──
+  document.getElementById('statATL').textContent = atl.toFixed(1);
+  let atlComment;
+  if      (atl >= 10) atlComment = 'Heavy recent load — your body is working hard right now.';
+  else if (atl >= 6)  atlComment = 'Moderate fatigue from a solid recent week of training.';
+  else if (atl >= 2)  atlComment = 'Light recent load — legs should feel relatively fresh.';
+  else                atlComment = 'Very low recent activity — well rested but fitness may dip.';
+  document.getElementById('statATLComment').textContent = atlComment;
+
+  // ── Form display + commentary ──
   const formEl = document.getElementById('statForm');
   formEl.textContent = (form >= 0 ? '+' : '') + form.toFixed(1);
-  // Green if form is positive (fresh), orange if negative (fatigued)
   formEl.style.color = form >= 0 ? '#22c55e' : 'var(--accent)';
+  let formComment;
+  if      (form >= 3)  formComment = 'Peak form — you\'re fresh and primed to race or hit a PB.';
+  else if (form >= 0)  formComment = 'Well balanced — fit and recovered, good time to train hard.';
+  else if (form >= -3) formComment = 'In a training block — some fatigue is normal, keep going.';
+  else                 formComment = 'Carrying significant fatigue — an easy day or rest will help.';
+  document.getElementById('statFormComment').textContent = formComment;
 })();
 
 // ===== FILTER RUNS TO SELECTED PERIOD =====
