@@ -128,6 +128,14 @@
     .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
     .stat-value { font-size: 26px; font-weight: 800; letter-spacing: -1px; line-height: 1; }
     .stat-card:first-child .stat-value { color: var(--accent); }
+
+    /* ===== FITNESS CARD ===== */
+    .fitness-row { display: flex; gap: 0; margin-top: 4px; }
+    .fitness-item { flex: 1; }
+    .fitness-item + .fitness-item { border-left: 1px solid var(--border); padding-left: 14px; }
+    .fitness-val { font-size: 24px; font-weight: 800; letter-spacing: -1px; line-height: 1; color: var(--text); }
+    .fitness-key { font-size: 10px; color: var(--muted); margin-top: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .fitness-hint { color: var(--border); }
     .stat-unit { font-size: 14px; font-weight: 500; opacity: 0.7; }
     .stat-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
 
@@ -246,10 +254,22 @@
 
   <!-- ===== STAT CARDS ===== -->
   <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-label">Total Distance</div>
-      <div class="stat-value" id="statTotalKm">—<span class="stat-unit">km</span></div>
-      <div class="stat-sub" id="statTotalSub"></div>
+    <div class="stat-card" id="cardFitness">
+      <div class="stat-label">Running Fitness</div>
+      <div class="fitness-row">
+        <div class="fitness-item">
+          <div class="fitness-val" id="statCTL">—</div>
+          <div class="fitness-key">Fitness <span class="fitness-hint">42d</span></div>
+        </div>
+        <div class="fitness-item">
+          <div class="fitness-val" id="statATL">—</div>
+          <div class="fitness-key">Fatigue <span class="fitness-hint">7d</span></div>
+        </div>
+        <div class="fitness-item">
+          <div class="fitness-val" id="statForm">—</div>
+          <div class="fitness-key">Form</div>
+        </div>
+      </div>
     </div>
     <div class="stat-card" id="cardAvgKm">
       <div class="stat-label">Avg Weekly km</div>
@@ -264,9 +284,9 @@
       </div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Total Runs</div>
-      <div class="stat-value" id="statRuns">—</div>
-      <div class="stat-sub" id="statRunsSub"></div>
+      <div class="stat-label">Total Distance</div>
+      <div class="stat-value" id="statTotalKm">—<span class="stat-unit">km</span></div>
+      <div class="stat-sub" id="statTotalSub"></div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Best Week</div>
@@ -348,6 +368,49 @@ function onPeriodChange() {
   updateDashboard();
 }
 
+// ===== CTL / ATL / FORM (Running Fitness Score) =====
+// CTL = chronic training load (42-day exp weighted avg daily km) — represents fitness
+// ATL = acute training load (7-day exp weighted avg daily km)  — represents fatigue
+// Form = CTL - ATL (positive = fresh/recovered, negative = fatigued/building)
+function computeFitness() {
+  const CTL_DECAY = Math.exp(-1 / 42);
+  const ATL_DECAY = Math.exp(-1 / 7);
+
+  // Sum km per calendar date across all runs
+  const loadByDate = {};
+  for (const r of ALL_RUNS) {
+    loadByDate[r.date] = (loadByDate[r.date] || 0) + r.km;
+  }
+
+  // Walk day by day from first run to today, applying decay
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = new Date(ALL_RUNS[0].date);
+
+  let ctl = 0, atl = 0;
+  const d = new Date(start);
+  while (d <= today) {
+    const dateStr = d.toISOString().slice(0, 10);
+    const load = loadByDate[dateStr] || 0;
+    ctl = ctl * CTL_DECAY + load * (1 - CTL_DECAY);
+    atl = atl * ATL_DECAY + load * (1 - ATL_DECAY);
+    d.setDate(d.getDate() + 1);
+  }
+
+  return { ctl, atl, form: ctl - atl };
+}
+
+// Render fitness score once on load (always uses full ALL_RUNS history)
+(function renderFitness() {
+  const { ctl, atl, form } = computeFitness();
+  document.getElementById('statCTL').textContent  = ctl.toFixed(1);
+  document.getElementById('statATL').textContent  = atl.toFixed(1);
+  const formEl = document.getElementById('statForm');
+  formEl.textContent = (form >= 0 ? '+' : '') + form.toFixed(1);
+  // Green if form is positive (fresh), orange if negative (fatigued)
+  formEl.style.color = form >= 0 ? '#22c55e' : 'var(--accent)';
+})();
+
 // ===== FILTER RUNS TO SELECTED PERIOD =====
 function filterRuns(period) {
   const now    = new Date();
@@ -424,7 +487,6 @@ function updateDashboard() {
   // ── Update stat cards ──
   document.getElementById('statTotalKm').innerHTML  = totalKm.toFixed(1) + '<span class="stat-unit">km</span>';
   document.getElementById('statAvgKm').innerHTML    = avgKm.toFixed(1)   + '<span class="stat-unit">km</span>';
-  document.getElementById('statRuns').textContent   = totalRuns;
   document.getElementById('statBest').innerHTML     = bestWeek.km.toFixed(1) + '<span class="stat-unit">km</span>';
 
   // Update target tracking bar on avg weekly km card
@@ -432,7 +494,6 @@ function updateDashboard() {
 
   document.getElementById('statTotalSub').textContent = periodLabel;
   document.getElementById('statAvgSub').textContent   = `${weekBuckets.length} weeks · ${periodLabel}`;
-  document.getElementById('statRunsSub').textContent  = periodLabel;
   document.getElementById('statBestSub').textContent  = `w/c ${bestWeek.label}`;
   document.getElementById('headerSub').textContent    = `Daniel Chen · Strava · ${periodLabel}`;
   document.getElementById('chartSub').textContent     = `Distance & run frequency · by ${granLabel}`;
