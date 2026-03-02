@@ -421,12 +421,24 @@ function computeFitness() {
   return { ctl, atl, form: ctl - atl };
 }
 
+// Maps a 0–1 ratio to a color: 0 = deep red, 0.5 = amber, 1 = bright green
+// Darker at extremes (very bad = dark red, very good = deep green)
+function fitnessColor(ratio) {
+  ratio = Math.max(0, Math.min(1, ratio));
+  const hue = ratio * 120;                        // 0=red, 60=yellow, 120=green
+  const lightness = 35 + ratio * 20;              // 35% at worst → 55% at best
+  return `hsl(${hue}, 85%, ${lightness}%)`;
+}
+
 // Render fitness score once on load (always uses full ALL_RUNS history)
 (function renderFitness() {
   const { ctl, atl, form } = computeFitness();
 
   // ── CTL display + commentary ──
-  document.getElementById('statCTL').textContent = ctl.toFixed(1);
+  // Higher CTL = better fitness = greener; lower = redder
+  const ctlEl = document.getElementById('statCTL');
+  ctlEl.textContent = ctl.toFixed(1);
+  ctlEl.style.color = fitnessColor(Math.min(ctl / 120, 1));
   let ctlComment;
   if      (ctl >= 80) ctlComment = 'Strong aerobic base — you\'re in the best shape of your recent training.';
   else if (ctl >= 50) ctlComment = 'Solid fitness level, consistent training is showing.';
@@ -435,7 +447,10 @@ function computeFitness() {
   document.getElementById('statCTLComment').textContent = ctlComment;
 
   // ── ATL display + commentary ──
-  document.getElementById('statATL').textContent = atl.toFixed(1);
+  // Higher ATL = more fatigue = redder; lower = greener (well rested)
+  const atlEl = document.getElementById('statATL');
+  atlEl.textContent = atl.toFixed(1);
+  atlEl.style.color = fitnessColor(1 - Math.min(atl / 130, 1));
   let atlComment;
   if      (atl >= 90) atlComment = 'Heavy recent load — your body is working hard right now.';
   else if (atl >= 50) atlComment = 'Moderate fatigue from a solid recent week of training.';
@@ -444,9 +459,10 @@ function computeFitness() {
   document.getElementById('statATLComment').textContent = atlComment;
 
   // ── Form display + commentary ──
+  // ── Form color: scales from deep red (-25) through amber (0) to bright green (+25) ──
   const formEl = document.getElementById('statForm');
   formEl.textContent = (form >= 0 ? '+' : '') + form.toFixed(1);
-  formEl.style.color = form >= 0 ? '#22c55e' : 'var(--accent)';
+  formEl.style.color = fitnessColor((form + 25) / 50);
   let formComment;
   if      (form >= 10)  formComment = 'Peak form — you\'re fresh and primed to race or hit a PB.';
   else if (form >= 0)   formComment = 'Well balanced — fit and recovered, good time to train hard.';
