@@ -465,7 +465,7 @@ function renderFitness() {
     // For ATL (fatigue), going up is bad (invertColor=true)
     const isGood = invertColor ? diff < 0 : diff > 0;
     const cls = isGood ? 'fit-delta fit-delta-up' : 'fit-delta fit-delta-down';
-    return \`<span class="\${cls}">\${arrow} \${Math.abs(diff).toFixed(1)}</span>\`;
+    return `<span class="\${cls}">\${arrow} \${Math.abs(diff).toFixed(1)}</span>`;
   }
 
   // ── CTL display + commentary ──
