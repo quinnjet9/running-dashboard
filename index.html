@@ -460,12 +460,11 @@ function renderFitness() {
   // Helper: render a delta badge next to a number element
   function delta(current, previous, invertColor = false) {
     const diff = current - previous;
-    if (Math.abs(diff) < 0.05) return '<span class="fit-delta fit-delta-neutral">―</span>';
-    const arrow = diff > 0 ? '▲' : '▼';
-    // For ATL (fatigue), going up is bad (invertColor=true)
+    if (Math.abs(diff) < 0.05) return '<span class="fit-delta fit-delta-neutral">&#8212;</span>';
+    const arrow = diff > 0 ? '&#9650;' : '&#9660;';
     const isGood = invertColor ? diff < 0 : diff > 0;
     const cls = isGood ? 'fit-delta fit-delta-up' : 'fit-delta fit-delta-down';
-    return `<span class="\${cls}">\${arrow} \${Math.abs(diff).toFixed(1)}</span>`;
+    return '<span class="' + cls + '">' + arrow + ' ' + Math.abs(diff).toFixed(1) + '</span>';
   }
 
   // ── CTL display + commentary ──
