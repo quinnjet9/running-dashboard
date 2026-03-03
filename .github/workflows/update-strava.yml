@@ -1,0 +1,36 @@
+name: Update Strava Data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch Strava data and update runs.json
+        env:
+          STRAVA_CLIENT_ID: ${{ secrets.STRAVA_CLIENT_ID }}
+          STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
+          STRAVA_REFRESH_TOKEN: ${{ secrets.STRAVA_REFRESH_TOKEN }}
+        run: python scripts/fetch_strava.py
+
+      - name: Commit and push if data changed
+        run: |
+          git config user.name "fitness-dashboard-bot"
+          git config user.email "bot@fitness-dashboard"
+          git add runs.json
+          git diff --cached --quiet || git commit -m "Update runs.json [$(date -u '+%Y-%m-%d %H:%M UTC')]"
+          git push
